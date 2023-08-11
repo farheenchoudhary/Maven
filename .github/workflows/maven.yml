@@ -16,6 +16,12 @@ jobs:
     steps:
     - name: Checkout Repo in ubuntu
       uses: actions/checkout@v3
+      
+    - name: Display the Repo content
+      run: |
+        mvn -version
+        pwd
+        ls -lrth
      
     - name: Set up JDK 17
       uses: actions/setup-java@v3
@@ -25,5 +31,28 @@ jobs:
         cache: maven
         
     - name: Validating POM XML File
-      run: mvn validate
+      run: |
+        mvn validate
+        ls -lrth
+      
+    - name: Compile the code
+      run: |
+        ls -lrth
+        mvn compile
+        ls -lrth
+      
+      
+    - name: Test the code
+      run: |
+        ls -lrth
+        mvn test
+        ls -lrth
+      
+    - name: Clean the code
+      run: |
+        ls -lrth
+        mvn clean 
+        ls -lrth
+      
+      
 
