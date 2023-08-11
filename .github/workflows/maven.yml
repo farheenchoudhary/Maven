@@ -66,6 +66,6 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
           name: maven-artifact
-          path: target/demoapp-1.0-SNAPSHOT.jar    
+          path: target/mavendemoapp-1.0-SNAPSHOT.jar    
       
 
