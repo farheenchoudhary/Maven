@@ -40,8 +40,7 @@ jobs:
         ls -lrth
         mvn compile
         ls -lrth
-      
-      
+    
     - name: Test the code
       run: |
         ls -lrth
@@ -54,5 +53,19 @@ jobs:
         mvn clean 
         ls -lrth
       
+    - name: Create a new package
+      run: |
+        mvn package
+        ls -lrth target/
+        
+    - name:  Priniting message command 
+      run: |
+        java -cp target/demoapp-1.0-SNAPSHOT.jar com.example.demo.App
+        
+    - name: Artifact upload process in workflow
+      uses: actions/upload-artifact@v3
+      with:
+          name: maven-artifact
+          path: target/demoapp-1.0-SNAPSHOT.jar    
       
 
