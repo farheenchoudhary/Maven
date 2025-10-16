@@ -1,0 +1,386 @@
+##########################################################Details of YFS_ORDER_HOLD_TYPE_LOG Before the activity#############################################################
+set time on timin on
+set line 1000
+set pages 500
+set long 50000
+col INDEX_TYPE for a12
+col TABLE_OWNER for a12
+col TABLESPACE_NAME for a20
+col SEGMENT_NAME for a37
+col TABLE_NAME for a18
+col OBJECT_NAME for a30
+col TRIGGERING_EVENT for a30
+col TRIGGER_NAME for a15
+col TRIGGERING_EVENT for a30
+col DESCRIPTION for a40
+col WHEN_CLAUSE for a70
+col REFERENCING_NAMES for a40
+col ROUND((BLOCKS*8),2)-ROUND((NUM_ROWS*AVG_ROW_LEN/1024),2)||'KB' for a20
+col "Fragmented size" for a20
+col "Actual size" for a20
+col OWNER for a10
+col R_OWNER for a10
+col COLUMN_NAME for a30
+col OWNER for a10
+col INDEX_NAME for a30
+col INDEX_TYPE for a20
+col TABLE_OWNER for a20
+col TABLE_NAME for a30
+col TABLESPACE_NAME for a30
+col R_TABLE_NAME for a30
+col R_PK for a30
+col CONSTRAINT_NAME for a20
+col OWNER for a20
+col COLUMN_NAME for a30
+col R_OWNER for a10
+col CONSTRAINT_NAME for a30
+
+SELECT SYSTIMESTAMP FROM DUAL; 
+
+select name,DB_UNIQUE_NAME,open_mode,database_role from v$database;
+select INSTANCE_NUMBER,INSTANCE_NAME,HOST_NAME,STATUS,DATABASE_STATUS from v$instance;
+select distinct sid from v$mystat;
+
+---Check Invalid Objects
+select owner,object_name,object_type,status from dba_objects where status<>'VALID' and owner='STRADMIN1';
+
+---Check table details YFS_ORDER_HOLD_TYPE_LOG
+select TABLE_NAME,TABLESPACE_NAME,STATUS,LAST_ANALYZED,PARTITIONED,ROW_MOVEMENT from dba_tables where TABLE_NAME ='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+select owner,segment_name,segment_type,tablespace_name,round(bytes/1024/1024/1024,2) TAB_SIZE_GB from dba_segments where segment_name='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1' and segment_type='TABLE';
+
+---Check Index Details
+SELECT OWNER,INDEX_NAME,INDEX_TYPE,TABLE_OWNER,TABLE_NAME,TABLESPACE_NAME,STATUS FROM DBA_INDEXES WHERE owner='STRADMIN1' AND TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG';
+
+select owner,segment_name,segment_type,tablespace_name,round(bytes/1024/1024/1024,2) IND_SIZE_GB from dba_segments where segment_name in (SELECT INDEX_NAME FROM DBA_INDEXES WHERE owner='STRADMIN1' AND TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG') and owner='STRADMIN1' and segment_type='INDEX'order by 5 desc;
+
+
+---Check constraints Details
+SELECT TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_TYPE,STATUS,VALIDATED,INDEX_NAME FROM DBA_CONSTRAINTS WHERE TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+SELECT a.table_name, a.column_name, a.constraint_name, c.owner, c.r_owner, c_pk.table_name r_table_name, c_pk.constraint_name r_pk FROM all_cons_columns a JOIN all_constraints c ON a.owner = c.owner AND a.constraint_name = c.constraint_name JOIN all_constraints c_pk ON c.r_owner = c_pk.owner AND c.r_constraint_name = c_pk.constraint_name WHERE c.constraint_type = 'R' AND a.table_name ='YFS_ORDER_HOLD_TYPE_LOG';
+
+
+
+---Check for any triggers on table
+select TRIGGER_NAME,TRIGGER_TYPE,TRIGGERING_EVENT,TABLE_NAME,STATUS from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+select TRIGGER_NAME,TRIGGER_BODY,DESCRIPTION from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+select TRIGGER_NAME,REFERENCING_NAMES,WHEN_CLAUSE from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+--- Check Fragmented size
+select owner,table_name,round((blocks*8),2)||'kb' "Fragmented size", round((num_rows*avg_row_len/1024),2)||'kb' "Actual size", round((blocks*8),2)-round((num_rows*avg_row_len/1024),2)||'kb',((round((blocks*8),2)-round((num_rows*avg_row_len/1024),2))/round((blocks*8),2))*100 -10 "reclaimable space % " from dba_tables where table_name ='YFS_ORDER_HOLD_TYPE_LOG' AND owner='STRADMIN1';
+
+
+
+select /*+ parallel(32) */ count(*) as val1 from STRADMIN1.YFS_ORDER_HOLD_TYPE_LOG;
+
+
+
+#########################################################Start of Defreg Activity####################################################################
+1)
+EXEC DBMS_REDEFINITION.CAN_REDEF_TABLE ('STRADMIN1', 'YFS_ORDER_HOLD_TYPE_LOG', DBMS_REDEFINITION.CONS_USE_PK);
+
+create table:
+
+set long 9999999
+select  dbms_metadata.get_ddl('TABLE',upper('YFS_ORDER_HOLD_TYPE_LOG'),upper('STRADMIN1'))  from dual ;
+
+  
+CREATE TABLE "STRADMIN1"."YFS_ORDER_HOLD_TYPE_LOG_INTERIM"
+   (    "STATISTICS_DETAIL_KEY" CHAR(24 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "START_TIME_STAMP" DATE DEFAULT sysdate NOT NULL ENABLE,
+        "END_TIME_STAMP" DATE DEFAULT sysdate NOT NULL ENABLE,
+        "SERVER_NAME" VARCHAR2(100 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "SERVER_ID" VARCHAR2(100) DEFAULT ' ' NOT NULL ENABLE,
+        "HOSTNAME" VARCHAR2(100) DEFAULT ' ' NOT NULL ENABLE,
+        "SERVICE_NAME" VARCHAR2(100 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "SERVICE_TYPE" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "CONTEXT_NAME" VARCHAR2(255) DEFAULT ' ' NOT NULL ENABLE,
+        "STATISTIC_NAME" VARCHAR2(80 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "STATISTIC_VALUE" NUMBER(15,2) DEFAULT 0 NOT NULL ENABLE,
+        "CREATEUSERID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "MODIFYUSERID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "CREATEPROGID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "MODIFYPROGID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "CREATETS" DATE DEFAULT sysdate NOT NULL ENABLE,
+        "MODIFYTS" TIMESTAMP (6) DEFAULT sysdate NOT NULL ENABLE,
+        "LOCKID" NUMBER(5,0) DEFAULT 0 NOT NULL ENABLE
+   ) SEGMENT CREATION IMMEDIATE
+  PCTFREE 10 PCTUSED 40 INITRANS 32 MAXTRANS 255
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "STRADM1"  ENABLE ROW MOVEMENT;
+
+
+2)
+
+ALTER SESSION FORCE PARALLEL DML PARALLEL 8;
+ALTER SESSION FORCE PARALLEL QUERY PARALLEL 8;
+
+EXEC DBMS_REDEFINITION.START_REDEF_TABLE('STRADMIN1','YFS_ORDER_HOLD_TYPE_LOG','YFS_ORDER_HOLD_TYPE_LOG_INTERIM');
+
+
+3)
+EXEC DBMS_REDEFINITION.SYNC_INTERIM_TABLE ('STRADMIN1','YFS_ORDER_HOLD_TYPE_LOG','YFS_ORDER_HOLD_TYPE_LOG_INTERIM');
+
+
+select 'alter index STRADMIN1.'||index_name|| ' parallel 8;' from dba_indexes where table_name='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+select 'alter index STRADMIN1.'||index_name|| ' no parallel;' from dba_indexes where table_name='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+select 'alter index STRADMIN1.'||index_name|| ' no parallel;' from dba_indexes where table_name='YFS_ORDER_HOLD_TYPE_LOG_INTERIM' and owner='STRADMIN1';
+
+col table_name for 40
+select table_name,index_name , owner,degree from dba_indexes where degree>1;
+
+4)
+DECLARE
+NUM_ERRORS PLS_INTEGER;
+BEGIN 
+DBMS_REDEFINITION.COPY_TABLE_DEPENDENTS ('STRADMIN1','YFS_ORDER_HOLD_TYPE_LOG','YFS_ORDER_HOLD_TYPE_LOG_INTERIM',DBMS_REDEFINITION.CONS_ORIG_PARAMS, TRUE, TRUE, TRUE, TRUE, NUM_ERRORS);
+END;
+/
+
+5)
+col BASE_TABLE_NAME for a30
+col object_name for 40
+
+SELECT OBJECT_NAME, BASE_TABLE_NAME, DDL_TXT FROM DBA_REDEFINITION_ERRORS;
+
+6)
+
+EXEC DBMS_STATS.GATHER_TABLE_STATS (ownname => 'STRADMIN1' , tabname => 'YFS_ORDER_HOLD_TYPE_LOG_INTERIM', cascade => true, estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE ,METHOD_OPT=>'FOR ALL COLUMNS SIZE 1', granularity => 'ALL', degree => 16);
+
+###############################################################Details of YFS_ORDER_HOLD_TYPE_LOG_INTERIM table#################################################
+
+set time on timin on
+set line 1000
+set pages 500
+set long 50000
+col INDEX_TYPE for a12
+col TABLE_OWNER for a12
+col TABLESPACE_NAME for a20
+col SEGMENT_NAME for a37
+col TABLE_NAME for a18
+col OBJECT_NAME for a30
+col TRIGGERING_EVENT for a30
+col TRIGGER_NAME for a15
+col TRIGGERING_EVENT for a30
+col DESCRIPTION for a40
+col WHEN_CLAUSE for a70
+col REFERENCING_NAMES for a40
+col ROUND((BLOCKS*8),2)-ROUND((NUM_ROWS*AVG_ROW_LEN/1024),2)||'KB' for a20
+col "Fragmented size" for a20
+col "Actual size" for a20
+col OWNER for a10
+col R_OWNER for a10
+col COLUMN_NAME for a30
+col OWNER for a10
+col INDEX_NAME for a30
+col INDEX_TYPE for a20
+col TABLE_OWNER for a20
+col TABLE_NAME for a30
+col TABLESPACE_NAME for a30
+col R_TABLE_NAME for a30
+col R_PK for a30
+col CONSTRAINT_NAME for a20
+col OWNER for a20
+col COLUMN_NAME for a30
+col R_OWNER for a10
+col CONSTRAINT_NAME for a30
+
+SELECT SYSTIMESTAMP FROM DUAL; 
+
+select name,DB_UNIQUE_NAME,open_mode,database_role from v$database;
+select INSTANCE_NUMBER,INSTANCE_NAME,HOST_NAME,STATUS,DATABASE_STATUS from v$instance;
+select distinct sid from v$mystat;
+
+---Check Invalid Objects
+select owner,object_name,object_type,status from dba_objects where status<>'VALID' and owner='STRADMIN1';
+
+---Check table details YFS_ORDER_HOLD_TYPE_LOG_INTERIM
+select TABLE_NAME,TABLESPACE_NAME,STATUS,LAST_ANALYZED,PARTITIONED,ROW_MOVEMENT from dba_tables where TABLE_NAME ='YFS_ORDER_HOLD_TYPE_LOG_INTERIM' and owner='STRADMIN1';
+
+select owner,segment_name,segment_type,tablespace_name,round(bytes/1024/1024/1024,2) TAB_SIZE_GB from dba_segments where segment_name='YFS_ORDER_HOLD_TYPE_LOG_INTERIM' and owner='STRADMIN1' and segment_type='TABLE';
+
+---Check Index Details
+SELECT OWNER,INDEX_NAME,INDEX_TYPE,TABLE_OWNER,TABLE_NAME,TABLESPACE_NAME,STATUS FROM DBA_INDEXES WHERE owner='STRADMIN1' AND TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG_INTERIM';
+
+select owner,segment_name,segment_type,tablespace_name,round(bytes/1024/1024/1024,2) IND_SIZE_GB from dba_segments where segment_name in (SELECT INDEX_NAME FROM DBA_INDEXES WHERE owner='STRADMIN1' AND TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG_INTERIM') and owner='STRADMIN1' and segment_type='INDEX'order by 5 desc;
+
+
+---Check constraints Details
+SELECT TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_TYPE,STATUS,VALIDATED,INDEX_NAME FROM DBA_CONSTRAINTS WHERE TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG_INTERIM' and owner='STRADMIN1';
+
+SELECT a.table_name, a.column_name, a.constraint_name, c.owner, c.r_owner, c_pk.table_name r_table_name, c_pk.constraint_name r_pk FROM all_cons_columns a JOIN all_constraints c ON a.owner = c.owner AND a.constraint_name = c.constraint_name JOIN all_constraints c_pk ON c.r_owner = c_pk.owner AND c.r_constraint_name = c_pk.constraint_name WHERE c.constraint_type = 'R' AND a.table_name ='YFS_ORDER_HOLD_TYPE_LOG_INTERIM';
+
+
+
+---Check for any triggers on table
+select TRIGGER_NAME,TRIGGER_TYPE,TRIGGERING_EVENT,TABLE_NAME,STATUS from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG_INTERIM' and owner='STRADMIN1';
+select TRIGGER_NAME,TRIGGER_BODY,DESCRIPTION from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG_INTERIM' and owner='STRADMIN1';
+select TRIGGER_NAME,REFERENCING_NAMES,WHEN_CLAUSE from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG_INTERIM' and owner='STRADMIN1';
+
+--- Check Fragmented size
+select owner,table_name,round((blocks*8),2)||'kb' "Fragmented size", round((num_rows*avg_row_len/1024),2)||'kb' "Actual size", round((blocks*8),2)-round((num_rows*avg_row_len/1024),2)||'kb',((round((blocks*8),2)-round((num_rows*avg_row_len/1024),2))/round((blocks*8),2))*100 -10 "reclaimable space % " from dba_tables where table_name ='YFS_ORDER_HOLD_TYPE_LOG_INTERIM' AND owner='STRADMIN1';
+
+
+
+select /*+ parallel(32) */ count(*) as val1 from STRADMIN1.YFS_ORDER_HOLD_TYPE_LOG_INTERIM;
+select ( select /*+ parallel(8) */ count(*) as val1 from STRADMIN1.YFS_ORDER_HOLD_TYPE_LOG)-( select /*+ parallel(8) */ count(*) as val2  from STRADMIN1.YFS_ORDER_HOLD_TYPE_LOG_INTERIM) AS DIFF from dual;
+
+----------------------------------------------------------------used to check if any object in dependent is inavlid---------------
+
+##SELECT TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_TYPE,STATUS,VALIDATED,INDEX_NAME FROM DBA_CONSTRAINTS WHERE TABLE_NAME='&dependent_tables';
+
+##SELECT 'ALTER TABLE STRADMIN1.ORDERS ENABLE VALIDATE CONSTRAINT '|| CONSTRAINT_NAME||' ;' FROM DBA_CONSTRAINTS WHERE OWNER='STRADMIN1' AND VALIDATED<>'VALIDATED';
+
+
+
+select ( select /*+ parallel(4) */ count(*) as val1 from STRADMIN1.YFS_ORDER_HOLD_TYPE_LOG)-( select /*+ parallel(4) */ count(*) as val2  from STRADMIN1.YFS_ORDER_HOLD_TYPE_LOG_INTERIM) AS DIFF from dual;
+
+
+############################################ Finish of Defreg Activity###############################
+
+
+7)
+EXEC DBMS_REDEFINITION.SYNC_INTERIM_TABLE ('STRADMIN1','YFS_ORDER_HOLD_TYPE_LOG','YFS_ORDER_HOLD_TYPE_LOG_INTERIM');
+
+exec DBMS_REDEFINITION.FINISH_REDEF_TABLE ('STRADMIN1','YFS_ORDER_HOLD_TYPE_LOG','YFS_ORDER_HOLD_TYPE_LOG_INTERIM');
+
+
+
+##########################################################Check Invalid Objects and recompile If any #####################################
+
+select owner,object_name,object_type,status from dba_objects where status<>'VALID' and owner='STRADMIN1';
+
+select owner,object_name,object_type,status from dba_objects where status<>'VALID' and owner='STRADMIN1';
+
+
+############################################## Details of YFS_ORDER_HOLD_TYPE_LOG table after Defreg activity################################################################
+
+set time on timin on
+set line 300
+set pages 60
+set long 50000
+col INDEX_TYPE for a12
+col TABLE_OWNER for a12
+col TABLESPACE_NAME for a20
+col SEGMENT_NAME for a37
+col TABLE_NAME for a18
+col OBJECT_NAME for a24
+col TRIGGERING_EVENT for a30
+col TRIGGER_NAME for a15
+col TRIGGERING_EVENT for a30
+col DESCRIPTION for a40
+col WHEN_CLAUSE for a70
+col REFERENCING_NAMES for a40
+col ROUND((BLOCKS*8),2)-ROUND((NUM_ROWS*AVG_ROW_LEN/1024),2)||'KB' for a20
+col "Fragmented size" for a20
+col "Actual size" for a20
+col OWNER for a10
+col R_OWNER for a10
+col COLUMN_NAME for a30
+col OWNER for a10
+col INDEX_NAME for a30
+col INDEX_TYPE for a30
+col TABLE_OWNER for a20
+col TABLE_NAME for a10
+col TABLESPACE_NAME for a30
+col R_TABLE_NAME for a30
+col R_PK for a30
+col CONSTRAINT_NAME for a20
+col OWNER for a20
+col COLUMN_NAME for a30
+col R_OWNER for a10
+col CONSTRAINT_NAME for a30
+
+SELECT SYSTIMESTAMP FROM DUAL; 
+
+select name,DB_UNIQUE_NAME,open_mode,database_role from v$database;
+select INSTANCE_NUMBER,INSTANCE_NAME,HOST_NAME,STATUS,DATABASE_STATUS from v$instance;
+select distinct sid from v$mystat;
+
+---Check Invalid Objects
+select owner,object_name,object_type,status from dba_objects where status<>'VALID' and owner='STRADMIN1';
+
+---Check table details YFS_ORDER_HOLD_TYPE_LOG
+select TABLE_NAME,TABLESPACE_NAME,STATUS,LAST_ANALYZED,PARTITIONED,ROW_MOVEMENT from dba_tables where TABLE_NAME ='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+select owner,segment_name,segment_type,tablespace_name,round(bytes/1024/1024/1024,2) TAB_SIZE_GB from dba_segments where segment_name='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1' and segment_type='TABLE';
+
+---Check Index Details
+SELECT OWNER,INDEX_NAME,INDEX_TYPE,TABLE_OWNER,TABLE_NAME,TABLESPACE_NAME,STATUS FROM DBA_INDEXES WHERE owner='STRADMIN1' AND TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG';
+
+select owner,segment_name,segment_type,tablespace_name,round(bytes/1024/1024/1024,2) IND_SIZE_GB from dba_segments where segment_name in (SELECT INDEX_NAME FROM DBA_INDEXES WHERE owner='STRADMIN1' AND TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG') and owner='STRADMIN1' and segment_type='INDEX'order by 5 desc;
+
+
+---Check Constraints Details
+SELECT TABLE_NAME,CONSTRAINT_NAME,CONSTRAINT_TYPE,STATUS,VALIDATED,INDEX_NAME FROM DBA_CONSTRAINTS WHERE TABLE_NAME='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+SELECT a.table_name, a.column_name, a.constraint_name, c.owner, c.r_owner, c_pk.table_name r_table_name, c_pk.constraint_name r_pk FROM all_cons_columns a JOIN all_constraints c ON a.owner = c.owner AND a.constraint_name = c.constraint_name JOIN all_constraints c_pk ON c.r_owner = c_pk.owner AND c.r_constraint_name = c_pk.constraint_name WHERE c.constraint_type = 'R' AND a.table_name ='YFS_ORDER_HOLD_TYPE_LOG';
+
+
+
+---Check for any triggers on table
+select TRIGGER_NAME,TRIGGER_TYPE,TRIGGERING_EVENT,TABLE_NAME,STATUS from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+select TRIGGER_NAME,TRIGGER_BODY,DESCRIPTION from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+select TRIGGER_NAME,REFERENCING_NAMES,WHEN_CLAUSE from DBA_TRIGGERS where TABLE_NAME = 'YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+--- Check Fragmented size
+select owner,table_name,round((blocks*8),2)||'kb' "Fragmented size", round((num_rows*avg_row_len/1024),2)||'kb' "Actual size", round((blocks*8),2)-round((num_rows*avg_row_len/1024),2)||'kb',((round((blocks*8),2)-round((num_rows*avg_row_len/1024),2))/round((blocks*8),2))*100 -10 "reclaimable space % " from dba_tables where table_name ='YFS_ORDER_HOLD_TYPE_LOG' AND owner='STRADMIN1';
+
+
+
+select /*+ parallel(8) */ count(*) as val1 from STRADMIN1.YFS_ORDER_HOLD_TYPE_LOG;
+
+#######################################Update the Index degree########################################
+
+
+select 'alter index STRADMIN1.'||index_name|| ' noparallel;' from dba_indexes where table_name='YFS_ORDER_HOLD_TYPE_LOG' and owner='STRADMIN1';
+
+
+
+####################### Actual table ddl###################################
+
+
+
+
+  CREATE TABLE "STRADMIN1"."YFS_ORDER_HOLD_TYPE_LOG"
+   (    "STATISTICS_DETAIL_KEY" CHAR(24 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "START_TIME_STAMP" DATE DEFAULT sysdate NOT NULL ENABLE,
+        "END_TIME_STAMP" DATE DEFAULT sysdate NOT NULL ENABLE,
+        "SERVER_NAME" VARCHAR2(100 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "SERVER_ID" VARCHAR2(100) DEFAULT ' ' NOT NULL ENABLE,
+        "HOSTNAME" VARCHAR2(100) DEFAULT ' ' NOT NULL ENABLE,
+        "SERVICE_NAME" VARCHAR2(100 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "SERVICE_TYPE" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "CONTEXT_NAME" VARCHAR2(255) DEFAULT ' ' NOT NULL ENABLE,
+        "STATISTIC_NAME" VARCHAR2(80 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "STATISTIC_VALUE" NUMBER(15,2) DEFAULT 0 NOT NULL ENABLE,
+        "CREATEUSERID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "MODIFYUSERID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "CREATEPROGID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "MODIFYPROGID" VARCHAR2(40 CHAR) DEFAULT ' ' NOT NULL ENABLE,
+        "CREATETS" DATE DEFAULT sysdate NOT NULL ENABLE,
+        "MODIFYTS" TIMESTAMP (6) DEFAULT sysdate NOT NULL ENABLE,
+        "LOCKID" NUMBER(5,0) DEFAULT 0 NOT NULL ENABLE
+   ) SEGMENT CREATION IMMEDIATE
+  PCTFREE 10 PCTUSED 40 INITRANS 32 MAXTRANS 255
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "STRADM1"  ENABLE ROW MOVEMENT
+  CREATE UNIQUE INDEX "STRADMIN1"."YFS_ORDER_HOLD_TYPE_LOG_PK" ON "STRADMIN1"."YFS
+_STATISTICS_DETAIL" ("STATISTICS_DETAIL_KEY")
+  PCTFREE 10 INITRANS 64 MAXTRANS 255 COMPUTE STATISTICS
+  STORAGE(INITIAL 4194304 NEXT 4194304 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "STRADMIDX"
+ALTER TABLE "STRADMIN1"."YFS_ORDER_HOLD_TYPE_LOG" ADD CONSTRAINT "YFS_STATISTICS_D
+ETAIL_PK" PRIMARY KEY ("STATISTICS_DETAIL_KEY")
+  USING INDEX "STRADMIN1"."YFS_ORDER_HOLD_TYPE_LOG_PK"  ENABLE
+
